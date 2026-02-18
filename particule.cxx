@@ -174,6 +174,10 @@ void compareStructures(std::mt19937& mt, std::uniform_real_distribution<double>&
     }
 }
 
+/// @brief Calcule la distance entre 2 particules
+/// @param p1
+/// @param p2 
+/// @return la distance euclidienne entre les 2 particules
 double distance(const Particule& p1, const Particule& p2) {
     const std::array<double, 3> position1 = p1.getPosition();
     const std::array<double, 3> position2 = p2.getPosition();
@@ -185,6 +189,10 @@ double distance(const Particule& p1, const Particule& p2) {
     return std::sqrt(dist2);
 }
 
+/// @brief Calcule le vecteur distance entre 2 particules (p2 - p1)
+/// @param p1 
+/// @param p2 
+/// @return le vecteur distance entre les 2 particules
 std::array<double, 3> vecteurDistance(const Particule& p1, const Particule& p2) {
     const auto position1 = p1.getPosition();
     const auto position2 = p2.getPosition();
@@ -195,6 +203,10 @@ std::array<double, 3> vecteurDistance(const Particule& p1, const Particule& p2) 
     return vec;
 }
 
+/// @brief Calcule la force gravitationnelle exercée sur la particule d'indice idx par les autres particules du système
+/// @param p la liste des particules du système
+/// @param idx l'indice de la particule pour laquelle on veut calculer la force
+/// @return le vecteur force gravitationnelle exercée sur la particule d'indice idx
 std::array<double, 3> calculForce(const std::deque<Particule>& p, size_t idx) {
     std::array<double, 3> F = {0.0, 0.0, 0.0};
     const Particule& pi = p[idx];
@@ -207,6 +219,9 @@ std::array<double, 3> calculForce(const std::deque<Particule>& p, size_t idx) {
     return F;
 }
 
+/// @brief  Calcule l'énergie cinétique d'une particule
+/// @param p la particule pour laquelle on veut calculer l'énergie cinétique
+/// @return l'énergie cinétique de la particule p, calculée à partir de sa masse et de sa vitesse
 double calculEnergieCin(const Particule& p) {
     double v2 = 0.0;
     const auto& v = p.getVitesse();
@@ -216,6 +231,11 @@ double calculEnergieCin(const Particule& p) {
     return 0.5 * p.getMasse() * v2;
 }
 
+
+/// @brief Calcule l'énergie potentielle d'une particule par rapport aux autres particules du système
+/// @param p la particule pour laquelle on veut calculer l'énergie potentielle
+/// @param pList la liste des particules du système
+/// @return l'énergie potentielle de la particule p, calculée à partir de sa masse et de la distance qui la sépare des autres particules du système
 double calculEnergiePot(const Particule& p, const std::deque<Particule>& pList) {
     double Ep = 0.0;
     for(size_t j = 0; j < pList.size(); ++j) {
@@ -227,6 +247,10 @@ double calculEnergiePot(const Particule& p, const std::deque<Particule>& pList) 
     return Ep;
 }
 
+/// @brief Implemente l'algorithme de Stromer-Verlet pour faire évoluer le système de particules dans le temps
+/// @param p la liste des particules du système
+/// @param tend la durée d'intégration
+/// @param dt le pas de temps
 void StromerVerlet(std::deque<Particule>& p, double tend, double dt) {
     double t = 0.0;
     std::deque<std::array<double, 3>> F, F_old;
