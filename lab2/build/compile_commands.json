@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/home/benjamin-guy/Cours/CPPMA/build",
-  "command": "/usr/bin/g++ -Wall -O2 -pg -g -std=gnu++17 -o CMakeFiles/exe.dir/particule.cxx.o -c /home/benjamin-guy/Cours/CPPMA/particule.cxx",
-  "file": "/home/benjamin-guy/Cours/CPPMA/particule.cxx",
-  "output": "CMakeFiles/exe.dir/particule.cxx.o"
-}
-]

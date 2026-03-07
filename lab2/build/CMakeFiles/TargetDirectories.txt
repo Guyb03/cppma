@@ -1,3 +1,0 @@
-/home/benjamin-guy/Cours/CPPMA/build/CMakeFiles/exe.dir
-/home/benjamin-guy/Cours/CPPMA/build/CMakeFiles/edit_cache.dir
-/home/benjamin-guy/Cours/CPPMA/build/CMakeFiles/rebuild_cache.dir
