@@ -1,4 +1,4 @@
-TP1
+# Lab 1
 
 Q1. Il manque la spécification des pour l’utilisation de endl, cin et de flush. Le compilateur remarque l’absence de celle-ci et demande son ajoût. Deux solutions sont possibles soit préciser qu’on utilise les références à la bibliothèque standard de iostream en faisant using endl, soit préciser l’origine à chaque emploi de cette manière std :: endl.
 Le compilateur remarque que la variable j dans la fonction main est non utilisée. Comme elle n’est pas nécessaire dans le parcours de la matrice, remplissage ligne après ligne de vecteurs en utilisant fill_vector. D’ailleurs, il y a une autre erreur pas repérer par le compilateur mais qui génère une erreur lors de l’exécution, en entête du fichier on annonce une fonction fill_vectors qui peut être utilisé donc dans main mais en réalité on a crée fill_vector.

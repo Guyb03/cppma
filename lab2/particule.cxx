@@ -138,39 +138,105 @@ std::vector<Particule> createVector(int size, double rd) {
     return vector;
 }
 
+/// @brief Mesure le temps d'exécution d'une fonction et l'affiche
+/// @param label le nom du test affiché
+/// @param func la fonction à mesurer
+template<typename Func>
+double mesureTemps(const std::string& label, Func func) {
+    auto start = std::chrono::steady_clock::now();
+    func();
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+    std::cout << "  " << label << ": " << elapsed.count() << "s\n";
+    return elapsed.count();
+}
+
+/// @brief Génère une particule avec des valeurs aléatoires
+/// @param mt le générateur de nombres aléatoires
+/// @param dist la distribution uniforme
+/// @param id l'identifiant de la particule
+Particule makeRandomParticule(std::mt19937& mt, std::uniform_real_distribution<double>& dist, long id) {
+    return Particule(
+        {dist(mt), dist(mt), dist(mt)},  // position aléatoire
+        {dist(mt), dist(mt), dist(mt)},  // vitesse aléatoire
+        {0.0, 0.0, 0.0},
+        dist(mt) + 0.1,                  // masse > 0
+        "P", id
+    );
+}
+
 void compareStructures(std::mt19937& mt, std::uniform_real_distribution<double>& dist) {
-    std::list<Particule> list;
-    std::set<Particule> set;
-    std::deque<Particule> deque;
-    std::vector<Particule> vector;
 
-    for (int i=64; i<2e6; i*=2) {
-        std::cout << "Testing with " << i << " particles...\n";
+    for (int n = 64; n < 200000; n *= 2) {
+        std::cout << "\n=== N = " << n << " particules ===\n";
 
-        auto start = std::chrono::steady_clock::now();
-        list = createList(i, dist(mt));
-        auto end = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsed_seconds = end - start;
-        std::cout << "Elapsed time for list: " << elapsed_seconds.count() << "s\n";
+        // Pré-génération des particules (hors mesure)
+        std::vector<Particule> source;
+        source.reserve(n);
+        for (int i = 0; i < n; ++i)
+            source.push_back(makeRandomParticule(mt, dist, i));
 
-        auto start2 = std::chrono::steady_clock::now();
-        set = createSet(i, dist(mt));
-        auto end2 = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsed_seconds2 = end2 - start2;
-        std::cout << "Elapsed time for set: " << elapsed_seconds2.count() << "s\n"; 
+        // Indice et identifiant aléatoire pour les tests de recherche/suppression
+        size_t idx_milieu = n / 2;
 
-        auto start3 = std::chrono::steady_clock::now();
-        deque = createDeque(i, dist(mt));
-        auto end3 = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsed_seconds3 = end3 - start3;
-        std::cout << "Elapsed time for deque: " << elapsed_seconds3.count() << "s\n";
+        // INSERTION
+        std::cout << "[Insertion]\n";
+        std::list<Particule>   lst;
+        std::deque<Particule>  dq;
+        std::vector<Particule> vec;
+        std::set<Particule>    st;
+        vec.reserve(n); // réservation pour comparaison équitable
 
-        auto start4 = std::chrono::steady_clock::now();
-        vector = createVector(i, dist(mt));
-        auto end4 = std::chrono::steady_clock::now();
-        std::chrono::duration<double> elapsed_seconds4 = end4 - start4;
-        std::cout << "Elapsed time for vector: " << elapsed_seconds4.count() << "s\n";
+        mesureTemps("list  ", [&]{ for (auto& p : source) lst.push_back(p); });
+        mesureTemps("deque ", [&]{ for (auto& p : source) dq.push_back(p); });
+        mesureTemps("vector", [&]{ for (auto& p : source) vec.push_back(p); });
+        mesureTemps("set   ", [&]{ for (auto& p : source) st.insert(p); });
 
+        // ITÉRATION COMPLÈTE
+        std::cout << "[Iteration complete]\n";
+        volatile double sink = 0.0; // empêche l'optimisation du compilateur
+
+        mesureTemps("list  ", [&]{ for (auto& p : lst) sink += p.getMasse(); });
+        mesureTemps("deque ", [&]{ for (auto& p : dq)  sink += p.getMasse(); });
+        mesureTemps("vector", [&]{ for (auto& p : vec) sink += p.getMasse(); });
+        mesureTemps("set   ", [&]{ for (auto& p : st)  sink += p.getMasse(); });
+
+        // ACCÈS ALÉATOIRE (index n/2)
+        // set n'est pas testé : il ne supporte pas l'accès par indice
+        std::cout << "[Acces aleatoire index n/2] (set non applicable)\n";
+
+        mesureTemps("deque ", [&]{ sink += dq[idx_milieu].getMasse(); });
+        mesureTemps("vector", [&]{ sink += vec[idx_milieu].getMasse(); });
+
+        // INSERTION EN MILIEU
+        // vector et list seulement (deque similaire à vector ici)
+        std::cout << "[Insertion en milieu]\n";
+        Particule extra = makeRandomParticule(mt, dist, n + 1);
+
+        mesureTemps("list  ", [&]{
+            auto it = lst.begin(); std::advance(it, n/2);
+            lst.insert(it, extra);
+        });
+        mesureTemps("vector", [&]{
+            vec.insert(vec.begin() + n/2, extra);
+        });
+        mesureTemps("deque ", [&]{
+            dq.insert(dq.begin() + n/2, extra);
+        });
+
+        // SUPPRESSION EN MILIEU
+        std::cout << "[Suppression en milieu]\n";
+
+        mesureTemps("list  ", [&]{
+            auto it = lst.begin(); std::advance(it, n/2);
+            lst.erase(it);
+        });
+        mesureTemps("vector", [&]{
+            vec.erase(vec.begin() + n/2);
+        });
+        mesureTemps("deque ", [&]{
+            dq.erase(dq.begin() + n/2);
+        });
     }
 }
 
@@ -294,8 +360,8 @@ int main() {
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution<double> dist(0.0, 1.0);
-    
-    // compareStructures(mt, dist);
+
+    compareStructures(mt, dist);
 
     Particule Soleil({0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, 1, "Soleil", 0);
     Particule Terre({0.0, 1.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, 3.0e-6, "Terre", 1);
