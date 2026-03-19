@@ -78,8 +78,16 @@ public:
     }
 
     /**
-     * @brief Multiplication scalaire
-     * @param 
+     * @brief Somme entre vecteurs interne
+     * @param v vecteur à additionner
+     */
+    Vecteur& operator+=(const Vecteur &v) const {
+        for (int i = 0; )
+    }
+
+    /**
+     * @brief Multiplication scalaire interne
+     * @param a scalaire multiplié
      */
     Vecteur& operator*=(double a) {
         for (int i=0; i<N; ++i){
@@ -105,4 +113,4 @@ public:
 
 
 
-#endif//VECTEUR_H
+#endif // VECTEUR_H
