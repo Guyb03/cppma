@@ -2,91 +2,99 @@
 #define PARTICULE_H
 
 /**
- * @file Particule.h
+ * @file Particule.hxx
  * @brief Déclaration de la classe Particule
- * 
- * Représente une particule physique avec sa position, vitesse, force, masse et catégorie.
+ *
+ * Représente une particule physique caractérisée par sa position, vitesse,
+ * force, masse, catégorie et identifiant.
+ * Utilise Vecteur<3> pour les grandeurs vectorielles.
  */
+
 #include "Vecteur.hxx"
-#include <array>
 #include <string>
+#include <iostream>
 
 class Particule {
 private:
     Vecteur<> position;        ///< position de la particule
     Vecteur<> vitesse;         ///< vitesse de la particule
     Vecteur<> force;           ///< force appliquée à la particule
-    double masse;              ///< masse de la particule
+    Vecteur<> force_old;       ///< force au pas précédent (Störmer-Verlet)
+    double     masse;          ///< masse de la particule
     std::string categorie;     ///< catégorie de la particule
-    long identifiant;          ///< identifiant unique de la particule
+    long       identifiant;    ///< identifiant unique de la particule
 
 public:
 
-    /// @name Constructeur / Destructeur
+    /// @name Constructeur
     /// @{
 
     /** @brief Constructeur
-     *  @param position position initiale de la particule
-     *  @param vitesse vitesse initiale de la particule
-     *  @param force force initiale appliquée à la particule
-     *  @param masse masse de la particule
-     *  @param categorie catégorie de la particule
-     *  @param identifiant identifiant unique de la particule
+     *  @param pos  position initiale
+     *  @param vit  vitesse initiale
+     *  @param frc  force initiale
+     *  @param m    masse
+     *  @param cat  catégorie
+     *  @param id   identifiant unique
      */
-    Particule(const Vecteur<>& position,
-              const Vecteur<>& vitesse,
-              const Vecteur<>& force,
-              double masse, const std::string& categorie, long identifiant);
+    Particule(const Vecteur<>& pos, const Vecteur<>& vit, const Vecteur<>& frc,
+              double m, const std::string& cat, long id);
+
+    /// @}
+
+    /// @name Opérateurs
+    /// @{
+
+    /** @brief Comparaison par identifiant (nécessaire pour std::set<Particule>) */
+    bool operator<(const Particule& other) const;
 
     /// @}
 
     /// @name Accesseurs
     /// @{
 
-    /// @brief Retourne la position de la particule
-    Vecteur<> getPosition() const;
+    /// @brief Retourne la position
+    const Vecteur<>& getPosition()  const;
 
-    /// @brief Retourne la vitesse de la particule
-    Vecteur<> getVitesse() const;
+    /// @brief Retourne la vitesse
+    const Vecteur<>& getVitesse()   const;
 
-    /// @brief Retourne la force appliquée à la particule
-    Vecteur<> getForce() const;
+    /// @brief Retourne la force courante
+    const Vecteur<>& getForce()     const;
 
-    /// @brief Retourne la masse de la particule
-    double getMasse() const;
+    /// @brief Retourne la force au pas précédent
+    const Vecteur<>& getForceOld()  const;
 
-    /// @brief Retourne la catégorie de la particule
+    /// @brief Retourne la masse
+    double getMasse()               const;
+
+    /// @brief Retourne la catégorie
     const std::string& getCategorie() const;
 
-    /// @brief Retourne l'identifiant de la particule
-    long getIdentifiant() const;
+    /// @brief Retourne l'identifiant
+    long getIdentifiant()           const;
 
     /// @}
 
     /// @name Mutateurs
     /// @{
 
-    /** @brief Modifie la position de la particule
-     *  @param position nouvelle position
-     */
-    void setPosition(const Vecteur<>& position);
+    /** @brief Modifie la position */
+    void setPosition(const Vecteur<>& pos);
 
-    /** @brief Modifie la vitesse de la particule
-     *  @param vitesse nouvelle vitesse
-     */
-    void setVitesse(const Vecteur<>& vitesse);
+    /** @brief Modifie la vitesse */
+    void setVitesse(const Vecteur<>& vit);
 
-    /** @brief Modifie la force appliquée à la particule
-     *  @param force nouvelle force
-     */
-    void setForce(const Vecteur<>& force);
+    /** @brief Modifie la force */
+    void setForce(const Vecteur<>& frc);
 
-    /** @brief Modifie la masse de la particule
-     *  @param masse nouvelle masse
-     */
-    void setMasse(double masse);
+    /** @brief Modifie la masse */
+    void setMasse(double m);
 
     /// @}
 };
+
+/// @brief Affichage d'une particule
+std::ostream& operator<<(std::ostream& os, const Particule& p);
 
 #endif // PARTICULE_H

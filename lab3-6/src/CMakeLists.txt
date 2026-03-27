@@ -1,4 +1,2 @@
-# Créer une bibliothèque à partir d'un ensemble de fichiers de définitions (.cxx) sans main.
-# Ces fichiers ne contiennent pas de fonction main
-# Remplacer ... par les fichiers nécessaires 
-add_library(particules ...)
+# Créer une bibliothèque à partir des fichiers de définitions
+add_library(particules Particule.cxx Univers.cxx)

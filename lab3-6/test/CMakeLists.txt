@@ -1,6 +1,7 @@
-# Créer un executable à partir de fichiers sources
-add_executable(test_1  test_1.cxx)
+# Tests unitaires de la classe Vecteur (Q3)
+add_executable(testVecteur testVecteur.cxx)
+target_link_libraries(testVecteur particules)
 
-# Fait le lien avec la bibliothèque créée précedemment
-# Les entêtes sont automatiquement détectés.
-target_link_libraries(test_1 particules)
+# Tests de la classe Univers (Q5-Q10)
+add_executable(testUnivers testUnivers.cxx)
+target_link_libraries(testUnivers particules)
