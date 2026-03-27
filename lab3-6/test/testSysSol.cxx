@@ -5,15 +5,11 @@
 // Création d'un Système Solaire et simulation avec Stromër-Verlet
 // ================================================================
 void testSysSol() {
-    std::cout << "=== Création de l'Univers ===\n";
     Univers u(2);
     u.addParticule(Particule({0.0,0.0}, {0.0,0.0}, {0.0,0.0}, 1.0,      "Soleil",  0));
     u.addParticule(Particule({0.0,1.0}, {-1.0,0.0},{0.0,0.0}, 3.0e-6,   "Terre",   1));
     u.addParticule(Particule({0.0,5.36},{-0.425,0.0},{0.0,0.0},9.55e-4,  "Jupiter", 2));
     u.addParticule(Particule({34.75,0.0},{0.0,0.0296},{0.0,0.0},1.0e-14, "Halley",  3));
-
-    std::cout << "Dim=" << u.getDim() << "  Nb particules=" << u.getNbParticules() << "\n";
-    std::cout << u << "\n";
 
     u.StromerVerlet(0.0, 468.5, 0.015, true);
 }
