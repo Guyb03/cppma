@@ -41,7 +41,7 @@ public:
     /// @{
 
     int getDim()         const;
-    int getNbParticles() const;
+    int getNbParticules() const;
 
     /// @}
 
@@ -49,7 +49,7 @@ public:
     /// @{
 
     /** @brief Ajoute une particule à l'univers */
-    void addParticle(const Particule& p);
+    void addParticule(const Particule& p);
 
     /// @}
 

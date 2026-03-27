@@ -3,9 +3,9 @@
 Univers::Univers(int dim) : dim(dim) {}
 
 int Univers::getDim()         const { return dim; }
-int Univers::getNbParticles() const { return (int)particules.size(); }
+int Univers::getNbParticules() const { return (int)particules.size(); }
 
-void Univers::addParticle(const Particule& p) {
+void Univers::addParticule(const Particule& p) {
     particules.push_back(p);
 }
 
@@ -38,6 +38,17 @@ void Univers::StromerVerlet(double t_start, double t_end, double dt, bool affich
 
     calcForces(F);
 
+    // En-tête CSV : noms des particules
+    if (afficher) {
+        std::cout << "t";
+        for (const auto& p : particules) {
+            if (dim >= 1) std::cout << "," << p.getCategorie() << "_x";
+            if (dim >= 2) std::cout << "," << p.getCategorie() << "_y";
+            if (dim >= 3) std::cout << "," << p.getCategorie() << "_z";
+        }
+        std::cout << "\n";
+    }
+
     for (double t = t_start; t < t_end; t += dt) {
 
         // Mise à jour des positions
@@ -57,12 +68,26 @@ void Univers::StromerVerlet(double t_start, double t_end, double dt, bool affich
             particules[i].setVitesse(newVit);
         }
 
-        if (afficher) std::cout << "t=" << t + dt << "\n" << *this;
+        // Affichage CSV : une ligne par pas de temps
+        if (afficher) {
+            std::cout << (t + dt);
+            for (const auto& p : particules) {
+                std::cout << "," << p.getPosition()[0];
+                if (dim >= 2) std::cout << "," << p.getPosition()[1];
+                if (dim >= 3) std::cout << "," << p.getPosition()[2];
+            }
+            std::cout << "\n";
+        }
     }
 }
 
+// Affiche les positions courantes (snapshot), respecte dim
 std::ostream& operator<<(std::ostream& os, const Univers& u) {
-    for (const auto& p : u.particules)
-        os << p << "\n";
+    for (const auto& p : u.particules) {
+        os << p.getCategorie();
+        for (int d = 0; d < u.dim; ++d)
+            os << " " << p.getPosition()[d];
+        os << "\n";
+    }
     return os;
 }
