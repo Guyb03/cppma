@@ -1,6 +1,10 @@
 #include <gtest/gtest.h>
 #include "Univers.hxx"
 #include <random>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <cstdio>
 
 namespace {
 
@@ -15,6 +19,13 @@ Particule makeParticule(double x, double y, int id) {
         Vecteur<3>{},
         1.0, "P", id
     );
+}
+
+std::string lireFichier(const std::string& path) {
+    std::ifstream f(path);
+    std::ostringstream ss;
+    ss << f.rdbuf();
+    return ss.str();
 }
 
 } // namespace
@@ -56,7 +67,6 @@ TEST(UniversTest, AddMultiplesParticules) {
 }
 
 TEST(UniversTest, AddParticuleSurBord) {
-    // Une particule placée exactement à la limite doit être acceptée
     Univers u = makeUnivers2D();
     u.addParticule(makeParticule(0.0, 0.0, 0));
     EXPECT_EQ(u.getNbParticules(), 1);
@@ -77,7 +87,7 @@ TEST(UniversTest, StromerVerletConserveNombreParticules) {
 
 TEST(UniversTest, StromerVerletGraviteConserveNombreParticules) {
     Univers u(2, {100.0, 100.0, 0.0}, 1.0, 1.0, 50.0, true, false);
-    u.addParticule(Particule(Vecteur<3>{0.0, 0.0, 0.0}, Vecteur<3>{},       Vecteur<3>{}, 1.0,   "A", 0));
+    u.addParticule(Particule(Vecteur<3>{0.0, 0.0, 0.0}, Vecteur<3>{},            Vecteur<3>{}, 1.0,   "A", 0));
     u.addParticule(Particule(Vecteur<3>{1.0, 0.0, 0.0}, Vecteur<3>{0.0, 1.0, 0.0}, Vecteur<3>{}, 1e-6, "B", 1));
     int n_avant = u.getNbParticules();
     u.StromerVerlet(0.0, 0.01, 0.005, false);
@@ -91,7 +101,140 @@ TEST(UniversTest, StromerVerletSansParticules) {
 }
 
 // ============================================================
-// Performance insertion (vérification scalabilité)
+// sauvegarderVTK : structure du fichier
+// ============================================================
+
+TEST(UniversTest, VTKFichierCree) {
+    Univers u = makeUnivers2D();
+    u.addParticule(makeParticule(1.0, 2.0, 0));
+    const std::string path = "/tmp/test_vtk_cree.vtu";
+    u.sauvegarderVTK(path);
+    std::ifstream f(path);
+    EXPECT_TRUE(f.good()) << "Le fichier VTK n'a pas été créé";
+    std::remove(path.c_str());
+}
+
+TEST(UniversTest, VTKContientBaliseRacine) {
+    Univers u = makeUnivers2D();
+    u.addParticule(makeParticule(1.0, 2.0, 0));
+    const std::string path = "/tmp/test_vtk_racine.vtu";
+    u.sauvegarderVTK(path);
+    std::string contenu = lireFichier(path);
+    EXPECT_NE(contenu.find("<VTKFile"), std::string::npos);
+    EXPECT_NE(contenu.find("</VTKFile>"), std::string::npos);
+    std::remove(path.c_str());
+}
+
+TEST(UniversTest, VTKNombreDePointsCorrect) {
+    Univers u = makeUnivers2D();
+    u.addParticule(makeParticule(1.0, 2.0, 0));
+    u.addParticule(makeParticule(3.0, 4.0, 1));
+    u.addParticule(makeParticule(5.0, 6.0, 2));
+    const std::string path = "/tmp/test_vtk_points.vtu";
+    u.sauvegarderVTK(path);
+    std::string contenu = lireFichier(path);
+    EXPECT_NE(contenu.find("NumberOfPoints=\"3\""), std::string::npos);
+    std::remove(path.c_str());
+}
+
+TEST(UniversTest, VTKContientPosition) {
+    Univers u = makeUnivers2D();
+    u.addParticule(makeParticule(1.0, 2.0, 0));
+    const std::string path = "/tmp/test_vtk_pos.vtu";
+    u.sauvegarderVTK(path);
+    std::string contenu = lireFichier(path);
+    EXPECT_NE(contenu.find("Position"), std::string::npos);
+    EXPECT_NE(contenu.find("</Points>"), std::string::npos);
+    std::remove(path.c_str());
+}
+
+TEST(UniversTest, VTKContientVitesse) {
+    Univers u = makeUnivers2D();
+    u.addParticule(makeParticule(1.0, 2.0, 0));
+    const std::string path = "/tmp/test_vtk_vit.vtu";
+    u.sauvegarderVTK(path);
+    std::string contenu = lireFichier(path);
+    EXPECT_NE(contenu.find("Velocity"), std::string::npos);
+    std::remove(path.c_str());
+}
+
+TEST(UniversTest, VTKContientMasse) {
+    Univers u = makeUnivers2D();
+    u.addParticule(makeParticule(1.0, 2.0, 0));
+    const std::string path = "/tmp/test_vtk_masse.vtu";
+    u.sauvegarderVTK(path);
+    std::string contenu = lireFichier(path);
+    EXPECT_NE(contenu.find("Masse"), std::string::npos);
+    std::remove(path.c_str());
+}
+
+TEST(UniversTest, VTKUniversVide) {
+    Univers u = makeUnivers2D();
+    const std::string path = "/tmp/test_vtk_vide.vtu";
+    u.sauvegarderVTK(path);
+    std::string contenu = lireFichier(path);
+    EXPECT_NE(contenu.find("NumberOfPoints=\"0\""), std::string::npos);
+    std::remove(path.c_str());
+}
+
+// ============================================================
+// sauvegarderVTK : valeurs dans le fichier
+// ============================================================
+
+TEST(UniversTest, VTKPositionValeur) {
+    Univers u = makeUnivers2D();
+    u.addParticule(Particule(
+        Vecteur<3>{1.5, 2.5, 0.0}, Vecteur<3>{}, Vecteur<3>{}, 1.0, "P", 0));
+    const std::string path = "/tmp/test_vtk_posval.vtu";
+    u.sauvegarderVTK(path);
+    std::string contenu = lireFichier(path);
+    EXPECT_NE(contenu.find("1.5"), std::string::npos);
+    EXPECT_NE(contenu.find("2.5"), std::string::npos);
+    std::remove(path.c_str());
+}
+
+TEST(UniversTest, VTKMasseValeur) {
+    Univers u = makeUnivers2D();
+    u.addParticule(Particule(
+        Vecteur<3>{1.0, 1.0, 0.0}, Vecteur<3>{}, Vecteur<3>{}, 3.14, "P", 0));
+    const std::string path = "/tmp/test_vtk_masseval.vtu";
+    u.sauvegarderVTK(path);
+    std::string contenu = lireFichier(path);
+    EXPECT_NE(contenu.find("3.14"), std::string::npos);
+    std::remove(path.c_str());
+}
+
+// ============================================================
+// StromerVerlet + VTK : génération des fichiers
+// ============================================================
+
+TEST(UniversTest, VTKFreqGenereLesBonsFichiers) {
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, true);
+    u.addParticule(makeParticule(3.0, 5.0, 0));
+    u.addParticule(makeParticule(4.5, 5.0, 1));
+
+    // 10 pas de dt=0.001 avec vtkFreq=5 → fichiers au pas 0, 5, 10
+    u.StromerVerlet(0.0, 0.01, 0.001, false, 5, "/tmp/test_sv");
+
+    for (const std::string& f : {
+            "/tmp/test_sv_000000.vtu",
+            "/tmp/test_sv_000005.vtu",
+            "/tmp/test_sv_000010.vtu" }) {
+        EXPECT_TRUE(std::ifstream(f).good()) << f << " absent";
+        std::remove(f.c_str());
+    }
+}
+
+TEST(UniversTest, VTKFreqZeroNeCreeRienDeFichier) {
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, true);
+    u.addParticule(makeParticule(3.0, 5.0, 0));
+    u.StromerVerlet(0.0, 0.005, 0.001, false, 0, "/tmp/test_novtk");
+
+    EXPECT_FALSE(std::ifstream("/tmp/test_novtk_000000.vtu").good());
+}
+
+// ============================================================
+// Performance insertion
 // ============================================================
 
 TEST(UniversTest, InsertionGrandNombre) {

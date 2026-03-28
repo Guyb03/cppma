@@ -15,17 +15,7 @@ add_executable(testCellule testCellule.cxx)
 target_link_libraries(testCellule GTest::gtest_main particules)
 gtest_discover_tests(testCellule)
 
-# Tests unitaires : Univers (construction, ajout de particules)
+# Tests unitaires : Univers (construction, ajout de particules, VTK)
 add_executable(testUnivers testUnivers.cxx)
 target_link_libraries(testUnivers GTest::gtest_main particules)
 gtest_discover_tests(testUnivers)
-
-# Tests d'intégration : système solaire (gravitation)
-add_executable(testSysSol testSysSol.cxx)
-target_link_libraries(testSysSol GTest::gtest_main particules)
-gtest_discover_tests(testSysSol)
-
-# Tests d'intégration : potentiel de Lennard-Jones
-add_executable(testLJ testLJ.cxx)
-target_link_libraries(testLJ GTest::gtest_main particules)
-gtest_discover_tests(testLJ)

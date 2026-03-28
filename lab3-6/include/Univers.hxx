@@ -15,6 +15,7 @@
 #include <vector>
 #include <array>
 #include <iostream>
+#include <string>
 
 class Univers {
 private:
@@ -86,7 +87,13 @@ public:
      *  @param dt       pas de temps
      *  @param afficher affiche l'état à chaque pas si true
      */
-    void StromerVerlet(double t_start, double t_end, double dt, bool afficher = true);
+    void StromerVerlet(double t_start, double t_end, double dt,
+                       bool afficher = true,
+                       int vtkFreq = 0,
+                       const std::string& vtkPrefix = "output");
+
+    /** @brief Sauvegarde l'état courant dans un fichier VTK XML UnstructuredGrid (.vtu) */
+    void sauvegarderVTK(const std::string& filename) const;
 
     /// @}
 

@@ -1,5 +1,8 @@
 #include "Univers.hxx"
 #include "Cellule.hxx"
+#include <fstream>
+#include <iomanip>
+#include <sstream>
 
 Univers::Univers(int dim, std::array<double, 3> L, double epsilon,
                  double sigma, double rcut, bool useGrav, bool useLJ)
@@ -110,7 +113,44 @@ void Univers::calcForces(std::vector<Vecteur<3>>& F) const {
     }
 }
 
-void Univers::StromerVerlet(double t_start, double t_end, double dt, bool afficher) {
+void Univers::sauvegarderVTK(const std::string& filename) const {
+    std::ofstream f(filename);
+    int n = (int)particules.size();
+
+    f << "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
+      << "  <UnstructuredGrid>\n"
+      << "    <Piece NumberOfPoints=\"" << n << "\" NumberOfCells=\"0\">\n"
+      << "      <Points>\n"
+      << "        <DataArray name=\"Position\" type=\"Float32\" NumberOfComponents=\"3\" format=\"ascii\">\n"
+      << "          ";
+    for (const auto& p : particules)
+        f << p.getPosition()[0] << " " << p.getPosition()[1] << " " << p.getPosition()[2] << " ";
+    f << "\n        </DataArray>\n"
+      << "      </Points>\n"
+      << "      <PointData Vectors=\"Velocity\">\n"
+      << "        <DataArray type=\"Float32\" Name=\"Velocity\" NumberOfComponents=\"3\" format=\"ascii\">\n"
+      << "          ";
+    for (const auto& p : particules)
+        f << p.getVitesse()[0] << " " << p.getVitesse()[1] << " " << p.getVitesse()[2] << " ";
+    f << "\n        </DataArray>\n"
+      << "        <DataArray type=\"Float32\" Name=\"Masse\" format=\"ascii\">\n"
+      << "          ";
+    for (const auto& p : particules)
+        f << p.getMasse() << " ";
+    f << "\n        </DataArray>\n"
+      << "      </PointData>\n"
+      << "      <Cells>\n"
+      << "        <DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\"/>\n"
+      << "        <DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\"/>\n"
+      << "        <DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\"/>\n"
+      << "      </Cells>\n"
+      << "    </Piece>\n"
+      << "  </UnstructuredGrid>\n"
+      << "</VTKFile>\n";
+}
+
+void Univers::StromerVerlet(double t_start, double t_end, double dt,
+                             bool afficher, int vtkFreq, const std::string& vtkPrefix) {
     int n = (int)particules.size();
     std::vector<Vecteur<3>> F(n), F_old(n);
 
@@ -127,6 +167,13 @@ void Univers::StromerVerlet(double t_start, double t_end, double dt, bool affich
         std::cout << "\n";
     }
 
+    int step = 0;
+    if (vtkFreq > 0) {
+        std::ostringstream oss;
+        oss << vtkPrefix << "_" << std::setw(6) << std::setfill('0') << step << ".vtu";
+        sauvegarderVTK(oss.str());
+    }
+
     for (double t = t_start; t < t_end; t += dt) {
 
         // Mise à jour des positions
@@ -138,7 +185,7 @@ void Univers::StromerVerlet(double t_start, double t_end, double dt, bool affich
         }
 
         // Mise à jour de la grille
-        for (auto& c : cellules) c.vider(); // remet indices à []
+        for (auto& c : cellules) c.vider();
         for (int i = 0; i < n; ++i) {
             cellules[celluleIdx(particules[i].getPosition())].addParticule(i);
         }
@@ -150,6 +197,14 @@ void Univers::StromerVerlet(double t_start, double t_end, double dt, bool affich
             Vecteur<3> newVit = particules[i].getVitesse()
                 + (0.5 * dt / particules[i].getMasse()) * (F[i] + F_old[i]);
             particules[i].setVitesse(newVit);
+        }
+
+        ++step;
+
+        if (vtkFreq > 0 && step % vtkFreq == 0) {
+            std::ostringstream oss;
+            oss << vtkPrefix << "_" << std::setw(6) << std::setfill('0') << step << ".vtu";
+            sauvegarderVTK(oss.str());
         }
 
         // Affichage CSV : une ligne par pas de temps
