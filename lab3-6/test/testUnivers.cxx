@@ -22,8 +22,8 @@ Univers buildUniforme(int k, std::mt19937& mt) {
     std::uniform_real_distribution<double> dist(0.0, 1.0);
     int n = (int)std::pow(2, k);
     int total = n * n * n;
-    Univers u(3);
-    u.addParticule(Particule({0.0,0.0,0.0},{0.0,0.0,0.0},{0.0,0.0,0.0},1.0,"seed",0));
+    Univers u(3, {1.0, 1.0, 1.0}, 1.0, 1.0, 0.3, true, false);
+    u.addParticule(Particule(Vecteur<3>{0.0,0.0,0.0},Vecteur<3>{0.0,0.0,0.0},Vecteur<3>{},1.0,"seed",0));
     for (int i = 1; i < total; ++i) {
         Vecteur<3> pos{dist(mt), dist(mt), dist(mt)};
         Vecteur<3> zero{};
@@ -52,7 +52,7 @@ void testInsertion() {
         int total = n * n * n;
         std::cout << "N = " << total << " particules :\n";
         mesure("insertion", [&]() {
-            Univers u(3);
+            Univers u(3, {1.0, 1.0, 1.0}, 1.0, 1.0, 0.3, true, false);
             for (int i = 0; i < total; ++i) {
                 Vecteur<3> pos{dist(mt), dist(mt), dist(mt)};
                 Vecteur<3> zero{};

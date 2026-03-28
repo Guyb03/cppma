@@ -19,10 +19,9 @@ private:
     Vecteur<> position;        ///< position de la particule
     Vecteur<> vitesse;         ///< vitesse de la particule
     Vecteur<> force;           ///< force appliquée à la particule
-    Vecteur<> force_old;       ///< force au pas précédent (Störmer-Verlet)
-    double     masse;          ///< masse de la particule
+    double masse;              ///< masse de la particule
     std::string categorie;     ///< catégorie de la particule
-    long       identifiant;    ///< identifiant unique de la particule
+    long identifiant;          ///< identifiant unique de la particule
 
 public:
 
@@ -61,9 +60,6 @@ public:
 
     /// @brief Retourne la force courante
     const Vecteur<>& getForce()     const;
-
-    /// @brief Retourne la force au pas précédent
-    const Vecteur<>& getForceOld()  const;
 
     /// @brief Retourne la masse
     double getMasse()               const;

@@ -1,12 +1,17 @@
+import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from pathlib import Path
 
-df = pd.read_csv(Path(__file__).parent / "simuSysSol.csv")
+# Accepte le chemin CSV en argument, sinon utilise le fichier par défaut
+csv_path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).parent / "simuLJ.csv"
+df = pd.read_csv(csv_path)
 
-corps = ["Soleil", "Terre", "Jupiter", "Halley"]
-couleurs = ["yellow", "blue", "orange", "red"]
+# Détection automatique des noms de particules depuis les colonnes *_x
+corps = [col[:-2] for col in df.columns if col.endswith("_x")]
+palette = ["yellow", "blue", "orange", "red", "green", "purple", "cyan", "magenta"]
+couleurs = [palette[i % len(palette)] for i in range(len(corps))]
 
 fig, ax = plt.subplots()
 ax.set_aspect("equal")
@@ -28,7 +33,7 @@ points = [ax.plot([], [], "o", color=c, label=n)[0] for c, n in zip(couleurs, co
 
 ax.legend(facecolor="black", labelcolor="white", loc="upper right")
 
-# Pas d'affichage : on saute des frames pour accélérer
+# On saute des frames pour accélérer l'animation
 STEP = max(1, len(df) // 500)
 
 def init():

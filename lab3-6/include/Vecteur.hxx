@@ -154,6 +154,15 @@ Vecteur<N> operator*(double a, Vecteur<N> v) { return v *= a; }
 template<int N>
 Vecteur<N> operator/(Vecteur<N> v, double a) { return v /= a; }
 
+/** @brief Distance euclidienne entre deux vecteurs
+ *  @param v1 premier vecteur
+ *  @param v2 second vecteur
+ */
+template<int N>
+double distance(const Vecteur<N>& v1, const Vecteur<N>& v2) {
+    return (v1 - v2).norm();
+}
+
 /** @brief Comparaison avec tolérance
  *  @param v1  premier vecteur
  *  @param v2  second vecteur
