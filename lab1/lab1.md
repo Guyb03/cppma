@@ -10,13 +10,13 @@ Dans le calcul de la trace et l’initialisation les vecteurs sont parcourus à 
 Q4. Afin d’éviter la surcharge côté mémoire, on peut faire une désallocation mémoire à la fin de main.
 
 
-2. Résolution d’EDO
+## 2. Résolution d’EDO
 
 Euler explicite
 
-	On a commencé par répondre eu problème en suivant les remarques pour se limiter à une fonction n’utilisant que 3 paramètres (nombres d’itérations, condition initiale et fonction phi) pour l’algorithme de la méthode d’Euler explicite. Comme le but de cette partie est la comparaison des deux algorithmes et dans une recherche de factorisation maximale du code, on a ensuite construit une structure rassemblant les données du problème indépendantes de la méthode de résolution. Cette structure Grid réunit l’ensemble (list) des nuds de la discrétisation du segment étudié, le nombre de nuds et le pas h.
+On a commencé par répondre eu problème en suivant les remarques pour se limiter à une fonction n’utilisant que 3 paramètres (nombres d’itérations, condition initiale et fonction phi) pour l’algorithme de la méthode d’Euler explicite. Comme le but de cette partie est la comparaison des deux algorithmes et dans une recherche de factorisation maximale du code, on a ensuite construit une structure rassemblant les données du problème indépendantes de la méthode de résolution. Cette structure Grid réunit l’ensemble (list) des nuds de la discrétisation du segment étudié, le nombre de nuds et le pas h.
 
 Euler implicite
 
-	On a implémenté la résolution d’une équation raide par la méthode d’Euler implicite en utilisant l’algorithme de Newton pour calculer u_n+1 à chaque itération. On calcule numériquement la dérivée centrée pour estimer la prochaine valeur, on définit un seuil de tolérance tol (1e-6) à partir duquel on peut sortir de cette boucle.
-	Pour faciliter la comparaison entre les 2 méthodes de résolution, on se sert de la bibliothèque iomanip et chrono pour faire un affichage plus complet et explicite.
+On a implémenté la résolution d’une équation raide par la méthode d’Euler implicite en utilisant l’algorithme de Newton pour calculer u_n+1 à chaque itération. On calcule numériquement la dérivée centrée pour estimer la prochaine valeur, on définit un seuil de tolérance tol (1e-6) à partir duquel on peut sortir de cette boucle.
+Pour faciliter la comparaison entre les 2 méthodes de résolution, on se sert de la bibliothèque iomanip et chrono pour faire un affichage plus complet et explicite.

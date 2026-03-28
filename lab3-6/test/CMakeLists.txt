@@ -1,15 +1,31 @@
-# Tests simulation système solaire
-add_executable(testSysSol testSysSol.cxx)
-target_link_libraries(testSysSol particules)
+include(GoogleTest)
 
-# Tests unitaires de la classe Vecteur
+# Tests unitaires : Vecteur (header-only template)
 add_executable(testVecteur testVecteur.cxx)
-target_link_libraries(testVecteur particules)
+target_link_libraries(testVecteur GTest::gtest_main particules)
+gtest_discover_tests(testVecteur)
 
-# Tests de la classe Univers
+# Tests unitaires : Particule
+add_executable(testParticule testParticule.cxx)
+target_link_libraries(testParticule GTest::gtest_main particules)
+gtest_discover_tests(testParticule)
+
+# Tests unitaires : Cellule
+add_executable(testCellule testCellule.cxx)
+target_link_libraries(testCellule GTest::gtest_main particules)
+gtest_discover_tests(testCellule)
+
+# Tests unitaires : Univers (construction, ajout de particules)
 add_executable(testUnivers testUnivers.cxx)
-target_link_libraries(testUnivers particules)
+target_link_libraries(testUnivers GTest::gtest_main particules)
+gtest_discover_tests(testUnivers)
 
-# Test du potentiel de Lennard-Jones (2 particules en oscillation)
+# Tests d'intégration : système solaire (gravitation)
+add_executable(testSysSol testSysSol.cxx)
+target_link_libraries(testSysSol GTest::gtest_main particules)
+gtest_discover_tests(testSysSol)
+
+# Tests d'intégration : potentiel de Lennard-Jones
 add_executable(testLJ testLJ.cxx)
-target_link_libraries(testLJ particules)
+target_link_libraries(testLJ GTest::gtest_main particules)
+gtest_discover_tests(testLJ)
