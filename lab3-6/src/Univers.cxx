@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <map>
 
 Univers::Univers(int dim, std::array<double, 3> L, double epsilon,
                  double sigma, double rcut, bool useGrav, bool useLJ)

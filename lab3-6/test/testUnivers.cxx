@@ -216,7 +216,7 @@ TEST(UniversTest, VTKFreqGenereLesBonsFichiers) {
     // 10 pas de dt=0.001 avec vtkFreq=5 → fichiers au pas 0, 5, 10
     u.StromerVerlet(0.0, 0.01, 0.001, false, 5, "/tmp/test_sv");
 
-    for (const std::string& f : {
+    for (const std::string f : {
             "/tmp/test_sv_000000.vtu",
             "/tmp/test_sv_000005.vtu",
             "/tmp/test_sv_000010.vtu" }) {

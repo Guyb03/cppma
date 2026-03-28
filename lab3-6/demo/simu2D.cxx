@@ -54,6 +54,8 @@ int main() {
         }
     }
 
-    u.StromerVerlet(0.0, 0.1, dt, true);
+    // Sauvegarde VTK toutes les 1000 itérations dans le répertoire courant
+    // Créer le dossier avant de lancer : mkdir -p vtk
+    u.StromerVerlet(0.0, 19.5, dt, false, 1000, "vtk/simu2D");
     return 0;
 }
