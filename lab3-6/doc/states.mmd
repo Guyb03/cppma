@@ -1,0 +1,21 @@
+stateDiagram-v2
+    [*] --> Vide : Univers(dim, L, ε, σ, rcut, ...)
+
+    Vide --> Peuplé : addParticule(p)
+    Peuplé --> Peuplé : addParticule(p)
+
+    Peuplé --> EnSimulation : StromerVerlet(t_start, t_end, dt, ...)
+    Vide --> EnSimulation : StromerVerlet(...) [N=0]
+
+    state EnSimulation {
+        [*] --> CalculForces : init F(t0)
+        CalculForces --> MàJPositions
+        MàJPositions --> MàJGrille
+        MàJGrille --> SauvegardeVTK : step % vtkFreq == 0
+        SauvegardeVTK --> CalculForces : t < t_end
+        MàJGrille --> CalculForces : t < t_end
+        CalculForces --> [*] : t >= t_end
+    }
+
+    EnSimulation --> Terminée : t >= t_end
+    Terminée --> EnSimulation : StromerVerlet(...) [nouvelle plage]

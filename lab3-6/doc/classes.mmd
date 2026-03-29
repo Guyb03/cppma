@@ -1,0 +1,69 @@
+classDiagram
+    class Vecteur~N~ {
+        -array~double,N~ coords
+        +Vecteur()
+        +Vecteur(initializer_list)
+        +operator[](int) double
+        +operator+(Vecteur) Vecteur
+        +operator-(Vecteur) Vecteur
+        +operator*(double) Vecteur
+        +norm() double
+        +dot(Vecteur) double
+        +distance(Vecteur, Vecteur)$ double
+    }
+
+    class Particule {
+        -Vecteur~3~ position
+        -Vecteur~3~ vitesse
+        -Vecteur~3~ force
+        -double masse
+        -string categorie
+        -int id
+        +getPosition() Vecteur~3~
+        +getVitesse() Vecteur~3~
+        +getMasse() double
+        +getCategorie() string
+        +setPosition(Vecteur~3~)
+        +setVitesse(Vecteur~3~)
+        +operator~lt~(Particule) bool
+    }
+
+    class Cellule {
+        -Vecteur~3~ centre
+        -vector~int~ indices
+        +Cellule(Vecteur~3~)
+        +addParticule(int)
+        +vider()
+        +getCentre() Vecteur~3~
+        +getIndices() vector~int~
+    }
+
+    class Univers {
+        -int dim
+        -array~double,3~ L
+        -double epsilon
+        -double sigma
+        -double rcut
+        -bool useGrav
+        -bool useLF
+        -array~int,3~ nc
+        -vector~Cellule~ cellules
+        -vector~Particule~ particules
+        +Univers(int, ...)
+        +addParticule(Particule)
+        +getDim() int
+        +getNbParticules() int
+        +StromerVerlet(double, double, double, bool, int, string)
+        +sauvegarderVTK(string)
+        -celluleIdx(Vecteur~3~) int
+        -voisinesIdx(int) vector~int~
+        -calcForces(vector~Vecteur~)
+        -forceGrav(int, int) Vecteur~3~
+        -forceLJ(int, int) Vecteur~3~
+    }
+
+    Particule "1" *-- "3" Vecteur : position / vitesse / force
+    Cellule "1" *-- "1" Vecteur : centre
+    Univers "1" o-- "N" Particule : particules
+    Univers "1" *-- "nc0×nc1×nc2" Cellule : grille linked-cell
+    Cellule ..> Particule : référence par indice

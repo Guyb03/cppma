@@ -1,0 +1,42 @@
+sequenceDiagram
+    actor Utilisateur
+    participant main
+    participant u as Univers
+    participant c as Cellule[]
+    participant p as Particule[]
+
+    Utilisateur->>main: exécuter simu2D
+
+    main->>u: Univers(2, {Lx,Ly,0}, ε, σ, rcut, false, true)
+    u->>c: créer nc[0]×nc[1] cellules
+
+    loop Rectangle bleu 160×40
+        main->>p: Particule(pos, {0,0,0}, m, "bleu")
+        main->>u: addParticule(p)
+        u->>c: cellules[idx].addParticule(i)
+    end
+
+    loop Carré rouge 40×40
+        main->>p: Particule(pos, {0,-10,0}, m, "rouge")
+        main->>u: addParticule(p)
+        u->>c: cellules[idx].addParticule(i)
+    end
+
+    main->>u: StromerVerlet(0.0, 19.5, 5e-5, false, 1000, "vtk/simu2D")
+    activate u
+        u->>u: calcForces(F)
+        u->>u: sauvegarderVTK("simu2D_000000.vtu")
+
+        loop Pas de temps t ∈ [0, 19.5[
+            u->>p: setPosition(x + dt·v + dt²/2m·F)
+            u->>c: vider() toutes les cellules
+            u->>c: replacer chaque particule
+            u->>u: calcForces(F_new)
+            u->>p: setVitesse(v + dt/2m·(F + F_new))
+            alt step % 1000 == 0
+                u->>u: sauvegarderVTK("simu2D_XXXXXX.vtu")
+            end
+        end
+    deactivate u
+
+    Utilisateur->>Utilisateur: ouvrir vtk/*.vtu dans Paraview

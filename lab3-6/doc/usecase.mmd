@@ -1,0 +1,20 @@
+graph LR
+    subgraph Système["Système de simulation moléculaire"]
+        UC1(["Configurer le domaine"])
+        UC2(["Ajouter des particules"])
+        UC3(["Lancer la simulation"])
+        UC4(["Sauvegarder en VTK"])
+        UC5(["Visualiser les résultats"])
+        UC6(["Afficher les positions CSV"])
+    end
+
+    Physicien(("Physicien"))
+    Paraview(("Paraview"))
+
+    Physicien --> UC1
+    Physicien --> UC2
+    Physicien --> UC3
+    UC3 -.->|inclut| UC4
+    UC3 -.->|inclut| UC6
+    UC4 -.->|étend| UC5
+    Paraview --> UC5
