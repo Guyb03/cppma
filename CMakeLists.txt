@@ -5,6 +5,7 @@ cmake_minimum_required (VERSION 3.20)
 project(SimUnivers CXX)
 
 set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ## Force le standard
 set(CMAKE_CXX_STANDARD 17)

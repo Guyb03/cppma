@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <utility>
 #include <map>
 
 Univers::Univers(int dim, std::array<double, 3> L, double epsilon,
@@ -127,6 +128,38 @@ Vecteur<3> Univers::forceLJ(size_t i, size_t j) const {
 
 }
 
+void Univers::calcForcesParoi(std::vector<Vecteur<3>>& F) const {
+    // r_cut du potentiel de paroi : point d'équilibre du LJ 1D (force nulle)
+    // F = 0 quand 2r = 2^{1/6}·σ  ⟹  r_eq = 2^{1/6}·σ / 2
+    // La coupure est fixée à r_cut = 2^{1/6}·σ (englobe la zone répulsive + le puits)
+    const double rcut_wall = std::pow(2.0, 1.0 / 6.0) * sigma;
+    int n = (int)particules.size();
+
+    for (int i = 0; i < n; ++i) {
+        const Vecteur<3> pos = particules[i].getPosition();
+        for (int d = 0; d < dim; ++d) {
+            // --- Face min (paroi à pos[d] = 0) : force dans la direction +d ---
+            if (condLimites[2*d] == ConditionLimite::REFLEXION_LJ) {
+                double r = pos[d];
+                if (r > 0.0 && r < rcut_wall) {
+                    double d2r    = 2.0 * r;
+                    double ratio6 = std::pow(sigma / d2r, 6);
+                    F[i][d] += -24.0 * epsilon / d2r * ratio6 * (1.0 - 2.0 * ratio6);
+                }
+            }
+            // --- Face max (paroi à pos[d] = L[d]) : force dans la direction −d ---
+            if (condLimites[2*d + 1] == ConditionLimite::REFLEXION_LJ) {
+                double r = L[d] - pos[d];
+                if (r > 0.0 && r < rcut_wall) {
+                    double d2r    = 2.0 * r;
+                    double ratio6 = std::pow(sigma / d2r, 6);
+                    F[i][d] -= -24.0 * epsilon / d2r * ratio6 * (1.0 - 2.0 * ratio6);
+                }
+            }
+        }
+    }
+}
+
 void Univers::calcForces(std::vector<Vecteur<3>>& F) const {
     int n = (int)particules.size();
     for (int i = 0; i < n; ++i) F[i] = Vecteur<3>{};
@@ -159,6 +192,9 @@ void Univers::calcForces(std::vector<Vecteur<3>>& F) const {
             }
         }
     }
+
+    // Forces de paroi LJ (REFLEXION_LJ)
+    calcForcesParoi(F);
 }
 
 void Univers::sauvegarderVTK(const std::string& filename) const {

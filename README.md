@@ -9,7 +9,7 @@ Développé dans le cadre du cours **C++ pour les mathématiques appliquées** (
 ## Structure du projet
 
 ```
-lab3-6/
+.
 ├── include/          # En-têtes : Vecteur, Particule, Cellule, Univers
 ├── src/              # Implémentations (.cxx) + CMakeLists de la bibliothèque
 ├── test/             # Tests Google Test (testVecteur, testParticule, testCellule, testUnivers)
@@ -18,7 +18,10 @@ lab3-6/
 ├── Doxyfile          # Configuration Doxygen
 ├── afficheSimuCsv.py # Visualisation CSV par animation matplotlib
 ├── LennardJones.py   # Tracé du potentiel LJ
-└── CMakeLists.txt    # Racine CMake
+├── CMakeLists.txt    # Racine CMake
+└── labs/             # Exercices préliminaires du cours
+    ├── lab1/         #   Intégration numérique, tracé de trajectoires
+    └── lab2/         #   Profiling et optimisation
 ```
 
 ---
@@ -40,7 +43,6 @@ Google Test est téléchargé automatiquement par CMake via `FetchContent`.
 ## Compilation
 
 ```bash
-# Depuis la racine lab3-6/
 cmake -S . -B build
 cmake --build build -j$(nproc)
 ```
@@ -55,7 +57,7 @@ Les artefacts produits dans `build/` :
 ## Exécuter les tests
 
 ```bash
-# Tous les tests (depuis build/)
+# Tous les tests
 cd build && ctest --output-on-failure
 
 # Une suite précise
@@ -119,16 +121,8 @@ u.setConditionsLimites({
 ## Générer la documentation
 
 ```bash
-# Depuis la racine lab3-6/
 doxygen Doxyfile
-```
-
-La documentation HTML est générée dans `doc/html/`.
-Ouvrir le point d'entrée :
-
-```bash
 xdg-open doc/html/index.html   # Linux
-open doc/html/index.html        # macOS
 ```
 
 ---
@@ -145,13 +139,9 @@ open doc/html/index.html        # macOS
 ### Trajectoires CSV avec matplotlib
 
 ```bash
-# Animation des trajectoires (stdout redirigé en CSV)
 ./build/demo/simuLJ > simuLJ.csv
 python3 afficheSimuCsv.py simuLJ.csv
 ```
-
-Le script détecte automatiquement les colonnes `<nom>_x` / `<nom>_y` et affiche
-une animation des trajectoires avec trace estompée.
 
 ---
 

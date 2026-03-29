@@ -297,6 +297,36 @@ TEST(UniversTest, CondLimPeriodiqueWrappe) {
     EXPECT_EQ(u.getNbParticules(), 1);
 }
 
+TEST(UniversTest, CondLimReflexionLJConserveLesParticules) {
+    // La condition REFLEXION_LJ agit via un potentiel continu :
+    // aucune particule ne doit disparaître pendant la simulation.
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, false);
+    u.setConditionsLimites({ConditionLimite::REFLEXION_LJ, ConditionLimite::REFLEXION_LJ,
+                            ConditionLimite::REFLEXION_LJ, ConditionLimite::REFLEXION_LJ,
+                            ConditionLimite::LIBRE,        ConditionLimite::LIBRE});
+    u.addParticule(Particule(Vecteur<3>{5.0, 5.0, 0.0},
+                             Vecteur<3>{2.0, 0.0, 0.0},
+                             Vecteur<3>{}, 1.0, "P", 0));
+    u.StromerVerlet(0.0, 1.0, 0.001, false);
+    EXPECT_EQ(u.getNbParticules(), 1);
+}
+
+TEST(UniversTest, CondLimReflexionLJRepousseAvantLaBordure) {
+    // Une particule proche de la paroi (x < r_cut = 2^{1/6}·σ ≈ 1.122)
+    // doit ressentir une force positive en x (repoussée vers l'intérieur).
+    // On vérifie que la simulation ne plante pas et conserve la particule.
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, false);
+    u.setConditionsLimites({ConditionLimite::REFLEXION_LJ, ConditionLimite::REFLEXION_LJ,
+                            ConditionLimite::REFLEXION_LJ, ConditionLimite::REFLEXION_LJ,
+                            ConditionLimite::LIBRE,        ConditionLimite::LIBRE});
+    // Particule placée à x=0.5 (dans la zone répulsive, r < 2^{1/6}·σ/2 ≈ 0.56)
+    u.addParticule(Particule(Vecteur<3>{0.5, 5.0, 0.0},
+                             Vecteur<3>{-1.0, 0.0, 0.0},
+                             Vecteur<3>{}, 1.0, "P", 0));
+    EXPECT_NO_FATAL_FAILURE(u.StromerVerlet(0.0, 0.1, 0.0005, false));
+    EXPECT_EQ(u.getNbParticules(), 1);
+}
+
 // ============================================================
 // Performance insertion
 // ============================================================

@@ -30,10 +30,11 @@
  * Les conditions PERIODIQUE doivent être appliquées par paire (xmin/xmax ensemble).
  */
 enum class ConditionLimite {
-    LIBRE,       ///< aucune contrainte : la particule peut sortir du domaine
-    REFLEXION,   ///< réflexion spéculaire : la composante de vitesse perpendiculaire est inversée
-    ABSORPTION,  ///< absorption : la particule est supprimée dès qu'elle touche le bord
-    PERIODIQUE   ///< transport vers le bord opposé sans modification de trajectoire
+    LIBRE,        ///< aucune contrainte : la particule peut sortir du domaine
+    REFLEXION,    ///< réflexion spéculaire : inversion instantanée de la composante de vitesse perpendiculaire
+    ABSORPTION,   ///< absorption : la particule est supprimée dès qu'elle touche le bord
+    PERIODIQUE,   ///< transport vers le bord opposé sans modification de trajectoire
+    REFLEXION_LJ  ///< réflexion par potentiel LJ de paroi (r_cut = 2^{1/6}·σ), force continue intégrée dans Verlet
 };
 
 /**
@@ -98,10 +99,22 @@ private:
      * @brief Applique la condition aux limites à la particule i après mise à jour de sa position
      *
      * Corrige la position et la vitesse selon la condition de chaque face franchie.
+     * Non utilisée pour REFLEXION_LJ (gérée via calcForcesParoi).
      * @param i indice de la particule
      * @return false si la particule est absorbée (doit être supprimée), true sinon
      */
     bool appliquerConditionParticule(int i);
+
+    /**
+     * @brief Ajoute les forces exercées par les parois en mode REFLEXION_LJ
+     *
+     * Pour chaque face configurée en REFLEXION_LJ, applique le potentiel :
+     *   F_i = -24ε/(2r) · (σ/(2r))^6 · (1 - 2·(σ/(2r))^6)
+     * avec r la distance à la paroi et r_cut = 2^{1/6}·σ.
+     * La force est orientée perpendiculairement à la paroi, en s'en éloignant.
+     * @param F vecteur de forces (taille nbParticules), incrémenté en sortie
+     */
+    void calcForcesParoi(std::vector<Vecteur<3>>& F) const;
 
 public:
 
