@@ -8,7 +8,10 @@
 Univers::Univers(int dim, std::array<double, 3> L, double epsilon,
                  double sigma, double rcut, bool useGrav, bool useLJ)
     : dim(dim), L(L), epsilon(epsilon),
-      sigma(sigma), rcut(rcut), useGrav(useGrav), useLF(useLJ)
+      sigma(sigma), rcut(rcut), useGrav(useGrav), useLF(useLJ),
+      condLimites{ConditionLimite::LIBRE, ConditionLimite::LIBRE,
+                  ConditionLimite::LIBRE, ConditionLimite::LIBRE,
+                  ConditionLimite::LIBRE, ConditionLimite::LIBRE}
 {
     for(int d = 0; d < 3; ++d) {
         nc[d] = (d < dim) ? std::max(1, (int)(L[d] / rcut)) : 1; // gère toutes les dimensions possibles
@@ -35,6 +38,50 @@ void Univers::addParticule(const Particule& p) {
     particules.push_back(p);
     cellules[celluleIdx(p.getPosition())].addParticule(idx);
 }
+
+void Univers::setConditionsLimites(const std::array<ConditionLimite, 6>& conds) {
+    condLimites = conds;
+}
+
+bool Univers::appliquerConditionParticule(int i) {
+    Vecteur<3> pos = particules[i].getPosition();
+    Vecteur<3> vit = particules[i].getVitesse();
+
+    for (int d = 0; d < dim; ++d) {
+        if (pos[d] < 0.0) {
+            switch (condLimites[2*d]) {
+                case ConditionLimite::REFLEXION:
+                    pos[d] = -pos[d];
+                    vit[d] = -vit[d];
+                    break;
+                case ConditionLimite::ABSORPTION:
+                    return false;
+                case ConditionLimite::PERIODIQUE:
+                    pos[d] += L[d];
+                    break;
+                default: break;
+            }
+        } else if (pos[d] >= L[d]) {
+            switch (condLimites[2*d + 1]) {
+                case ConditionLimite::REFLEXION:
+                    pos[d] = 2.0 * L[d] - pos[d];
+                    vit[d] = -vit[d];
+                    break;
+                case ConditionLimite::ABSORPTION:
+                    return false;
+                case ConditionLimite::PERIODIQUE:
+                    pos[d] -= L[d];
+                    break;
+                default: break;
+            }
+        }
+    }
+
+    particules[i].setPosition(pos);
+    particules[i].setVitesse(vit);
+    return true;
+}
+
 int Univers::celluleIdx(const Vecteur<3>& pos) const {
     int ix = std::max(0, std::min((int)(pos[0] / rcut), nc[0] - 1));
     int iy = std::max(0, std::min((int)(pos[1] / rcut), nc[1] - 1));
@@ -183,6 +230,23 @@ void Univers::StromerVerlet(double t_start, double t_end, double dt,
                 + dt * (particules[i].getVitesse() + (0.5 * dt / particules[i].getMasse()) * F[i]);
             particules[i].setPosition(newPos);
             F_old[i] = F[i];
+        }
+
+        // Application des conditions aux limites
+        {
+            std::vector<int> toRemove;
+            for (int i = 0; i < n; ++i) {
+                if (!appliquerConditionParticule(i))
+                    toRemove.push_back(i);
+            }
+            // Suppression des particules absorbées (du plus grand indice au plus petit)
+            for (int k = (int)toRemove.size() - 1; k >= 0; --k) {
+                int idx = toRemove[k];
+                particules.erase(particules.begin() + idx);
+                F.erase(F.begin() + idx);
+                F_old.erase(F_old.begin() + idx);
+                --n;
+            }
         }
 
         // Mise à jour de la grille

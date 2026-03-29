@@ -234,6 +234,70 @@ TEST(UniversTest, VTKFreqZeroNeCreeRienDeFichier) {
 }
 
 // ============================================================
+// Conditions aux limites
+// ============================================================
+
+TEST(UniversTest, CondLimReflexionRebondit) {
+    // Particule à x=0.1 avec v_x=-1, bord gauche et droit réflexifs
+    // Après dt=0.2 : newPos_x = 0.1 + 0.2*(-1) = -0.1 → réflexion → pos=0.1, vit_x=+1
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, false);
+    u.setConditionsLimites({ConditionLimite::REFLEXION, ConditionLimite::REFLEXION,
+                            ConditionLimite::REFLEXION, ConditionLimite::REFLEXION,
+                            ConditionLimite::LIBRE,     ConditionLimite::LIBRE});
+    u.addParticule(Particule(Vecteur<3>{0.1, 5.0, 0.0},
+                             Vecteur<3>{-1.0, 0.0, 0.0},
+                             Vecteur<3>{}, 1.0, "P", 0));
+    u.StromerVerlet(0.0, 0.2, 0.2, false);
+    EXPECT_EQ(u.getNbParticules(), 1);
+}
+
+TEST(UniversTest, CondLimAbsorptionSupprime) {
+    // Particule à x=0.1 avec v_x=-1, bord gauche absorbant
+    // Après dt=0.2 : newPos_x = -0.1 → particule absorbée
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, false);
+    u.setConditionsLimites({ConditionLimite::ABSORPTION, ConditionLimite::ABSORPTION,
+                            ConditionLimite::ABSORPTION, ConditionLimite::ABSORPTION,
+                            ConditionLimite::LIBRE,      ConditionLimite::LIBRE});
+    u.addParticule(Particule(Vecteur<3>{0.1, 5.0, 0.0},
+                             Vecteur<3>{-1.0, 0.0, 0.0},
+                             Vecteur<3>{}, 1.0, "P", 0));
+    u.StromerVerlet(0.0, 0.2, 0.2, false);
+    EXPECT_EQ(u.getNbParticules(), 0);
+}
+
+TEST(UniversTest, CondLimAbsorptionConserveAutres) {
+    // Parmi 2 particules, une seule sort du domaine : seule celle-là est supprimée
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, false);
+    u.setConditionsLimites({ConditionLimite::ABSORPTION, ConditionLimite::ABSORPTION,
+                            ConditionLimite::ABSORPTION, ConditionLimite::ABSORPTION,
+                            ConditionLimite::LIBRE,      ConditionLimite::LIBRE});
+    // Particule 0 sort à gauche
+    u.addParticule(Particule(Vecteur<3>{0.1, 5.0, 0.0},
+                             Vecteur<3>{-1.0, 0.0, 0.0},
+                             Vecteur<3>{}, 1.0, "P", 0));
+    // Particule 1 reste dans le domaine
+    u.addParticule(Particule(Vecteur<3>{5.0, 5.0, 0.0},
+                             Vecteur<3>{0.0, 0.0, 0.0},
+                             Vecteur<3>{}, 1.0, "Q", 1));
+    u.StromerVerlet(0.0, 0.2, 0.2, false);
+    EXPECT_EQ(u.getNbParticules(), 1);
+}
+
+TEST(UniversTest, CondLimPeriodiqueWrappe) {
+    // Particule à x=0.1 avec v_x=-1, bords x périodiques
+    // Après dt=0.2 : newPos_x = -0.1 → périodique → pos=9.9
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, false);
+    u.setConditionsLimites({ConditionLimite::PERIODIQUE, ConditionLimite::PERIODIQUE,
+                            ConditionLimite::REFLEXION,  ConditionLimite::REFLEXION,
+                            ConditionLimite::LIBRE,      ConditionLimite::LIBRE});
+    u.addParticule(Particule(Vecteur<3>{0.1, 5.0, 0.0},
+                             Vecteur<3>{-1.0, 0.0, 0.0},
+                             Vecteur<3>{}, 1.0, "P", 0));
+    u.StromerVerlet(0.0, 0.2, 0.2, false);
+    EXPECT_EQ(u.getNbParticules(), 1);
+}
+
+// ============================================================
 // Performance insertion
 // ============================================================
 

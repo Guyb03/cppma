@@ -24,6 +24,19 @@
 #include <string>
 
 /**
+ * @brief Types de conditions aux limites applicables sur chaque face du domaine
+ *
+ * Les six faces sont indexées [xmin, xmax, ymin, ymax, zmin, zmax].
+ * Les conditions PERIODIQUE doivent être appliquées par paire (xmin/xmax ensemble).
+ */
+enum class ConditionLimite {
+    LIBRE,       ///< aucune contrainte : la particule peut sortir du domaine
+    REFLEXION,   ///< réflexion spéculaire : la composante de vitesse perpendiculaire est inversée
+    ABSORPTION,  ///< absorption : la particule est supprimée dès qu'elle touche le bord
+    PERIODIQUE   ///< transport vers le bord opposé sans modification de trajectoire
+};
+
+/**
  * @brief Système de particules en interaction dans un domaine borné
  *
  * Gère la grille de cellules, les forces (gravité et/ou Lennard-Jones),
@@ -41,6 +54,9 @@ private:
     std::array<int, 3>       nc;        ///< nombre de cellules par axe (nc[d] = floor(L[d]/rcut))
     std::vector<Cellule>     cellules;  ///< grille de cellules (linked-cell list)
     std::vector<Particule>   particules;///< collection de toutes les particules
+
+    /// Conditions aux limites par face : [xmin, xmax, ymin, ymax, zmin, zmax]
+    std::array<ConditionLimite, 6> condLimites;
 
     /**
      * @brief Retourne l'indice plat de la cellule contenant une position donnée
@@ -77,6 +93,15 @@ private:
      * @param F vecteur de forces (taille nbParticules), modifié en sortie
      */
     void calcForces(std::vector<Vecteur<3>>& F) const;
+
+    /**
+     * @brief Applique la condition aux limites à la particule i après mise à jour de sa position
+     *
+     * Corrige la position et la vitesse selon la condition de chaque face franchie.
+     * @param i indice de la particule
+     * @return false si la particule est absorbée (doit être supprimée), true sinon
+     */
+    bool appliquerConditionParticule(int i);
 
 public:
 
@@ -127,6 +152,18 @@ public:
 
     /// @}
 
+    /// @name Conditions aux limites
+    /// @{
+
+    /**
+     * @brief Définit les conditions aux limites sur chaque face du domaine
+     *
+     * @param conds tableau de 6 conditions dans l'ordre [xmin, xmax, ymin, ymax, zmin, zmax]
+     */
+    void setConditionsLimites(const std::array<ConditionLimite, 6>& conds);
+
+    /// @}
+
     /// @name Simulation
     /// @{
 
@@ -137,6 +174,7 @@ public:
      * - x(t+dt) = x(t) + dt * v(t) + dt²/(2m) * F(t)
      * - v(t+dt) = v(t) + dt/(2m) * (F(t) + F(t+dt))
      *
+     * Les conditions aux limites sont appliquées après la mise à jour des positions.
      * La grille de cellules est reconstruite après chaque mise à jour des positions.
      *
      * @param t_start   temps initial de la simulation
