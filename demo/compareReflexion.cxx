@@ -41,7 +41,7 @@ static Univers makeSim(ConditionLimite mode) {
     const double rcut    = 2.5 * sigma;
     const double d_eq    = std::pow(2.0, 1.0 / 6.0) * sigma;  // ≈ 1.122
 
-    Univers u(2, {Lx, Ly, 0.0}, epsilon, sigma, rcut, false, true);
+    Univers u(2, {Lx, Ly, 0.0}, epsilon, sigma, rcut, 0.0, false, true);
     u.setConditionsLimites({mode, mode, mode, mode,
                             ConditionLimite::LIBRE, ConditionLimite::LIBRE});
 

@@ -6,7 +6,7 @@
 // Visualiser  : python3 afficheSimuCsv.py sysSol.csv
 // ================================================================
 int main() {
-    Univers u(2, {100.0, 100.0, 0.0}, 1.0, 1.0, 50.0, true, false);
+    Univers u(2, {100.0, 100.0, 0.0}, 1.0, 1.0, 50.0, 0.0, true, false);
 
     u.addParticule(Particule(Vecteur<3>{0.0,   0.0,  0.0}, Vecteur<3>{0.0,    0.0,    0.0}, Vecteur<3>{}, 1.0,     "Soleil",  0));
     u.addParticule(Particule(Vecteur<3>{0.0,   1.0,  0.0}, Vecteur<3>{-1.0,   0.0,    0.0}, Vecteur<3>{}, 3.0e-6,  "Terre",   1));

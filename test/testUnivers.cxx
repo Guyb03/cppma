@@ -77,7 +77,7 @@ TEST(UniversTest, AddParticuleSurBord) {
 // ============================================================
 
 TEST(UniversTest, StromerVerletConserveNombreParticules) {
-    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, true);
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, 0.0, false, true);
     u.addParticule(makeParticule(3.0, 5.0, 0));
     u.addParticule(makeParticule(4.5, 5.0, 1));
     int n_avant = u.getNbParticules();
@@ -86,7 +86,7 @@ TEST(UniversTest, StromerVerletConserveNombreParticules) {
 }
 
 TEST(UniversTest, StromerVerletGraviteConserveNombreParticules) {
-    Univers u(2, {100.0, 100.0, 0.0}, 1.0, 1.0, 50.0, true, false);
+    Univers u(2, {100.0, 100.0, 0.0}, 1.0, 1.0, 50.0, 0.0, true, false);
     u.addParticule(Particule(Vecteur<3>{0.0, 0.0, 0.0}, Vecteur<3>{},            Vecteur<3>{}, 1.0,   "A", 0));
     u.addParticule(Particule(Vecteur<3>{1.0, 0.0, 0.0}, Vecteur<3>{0.0, 1.0, 0.0}, Vecteur<3>{}, 1e-6, "B", 1));
     int n_avant = u.getNbParticules();
@@ -209,7 +209,7 @@ TEST(UniversTest, VTKMasseValeur) {
 // ============================================================
 
 TEST(UniversTest, VTKFreqGenereLesBonsFichiers) {
-    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, true);
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, 0.0, false, true);
     u.addParticule(makeParticule(3.0, 5.0, 0));
     u.addParticule(makeParticule(4.5, 5.0, 1));
 
@@ -226,7 +226,7 @@ TEST(UniversTest, VTKFreqGenereLesBonsFichiers) {
 }
 
 TEST(UniversTest, VTKFreqZeroNeCreeRienDeFichier) {
-    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, false, true);
+    Univers u(2, {10.0, 10.0, 0.0}, 1.0, 1.0, 2.5, 0.0, false, true);
     u.addParticule(makeParticule(3.0, 5.0, 0));
     u.StromerVerlet(0.0, 0.005, 0.001, false, 0, "/tmp/test_novtk");
 

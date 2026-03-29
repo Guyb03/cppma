@@ -50,8 +50,10 @@ private:
     double                   epsilon;   ///< profondeur du puits de potentiel Lennard-Jones
     double                   sigma;     ///< distance à laquelle le potentiel LJ est nul
     double                   rcut;      ///< rayon de coupure des interactions LJ
-    bool                     useGrav;   ///< active la gravitation newtonienne
+    double                   G;         ///< constante du champ gravitationnel uniforme (négatif = vers le bas)
+    bool                     useGrav;   ///< active la gravitation newtonienne entre particules
     bool                     useLF;     ///< active le potentiel de Lennard-Jones
+    bool                     usePotG;   ///< active le champ gravitationnel uniforme (F = m*G selon y)
     std::array<int, 3>       nc;        ///< nombre de cellules par axe (nc[d] = floor(L[d]/rcut))
     std::vector<Cellule>     cellules;  ///< grille de cellules (linked-cell list)
     std::vector<Particule>   particules;///< collection de toutes les particules
@@ -74,7 +76,7 @@ private:
     std::vector<int> voisinesIdx(int idx) const;
 
     /**
-     * @brief Calcule la force gravitationnelle exercée sur la particule i par j
+     * @brief Calcule la force gravitationnelle newtonienne exercée sur i par j
      * @param i indice de la particule subissant la force
      * @param j indice de la particule source
      * @return vecteur force (N)
@@ -88,6 +90,16 @@ private:
      * @return vecteur force (N)
      */
     Vecteur<3> forceLJ(size_t i, size_t j) const;
+
+    /**
+     * @brief Calcule la force du champ gravitationnel uniforme sur la particule i
+     *
+     * Applique un champ uniforme selon l'axe y : F = (0, m_i * G, 0).
+     * G négatif correspond à une gravité vers le bas.
+     * @param i indice de la particule
+     * @return vecteur force (N)
+     */
+    Vecteur<3> potGrav(int i) const;
 
     /**
      * @brief Calcule la force totale sur chaque particule et la stocke dans F
@@ -128,12 +140,15 @@ public:
      * @param epsilon profondeur du puits Lennard-Jones (énergie)
      * @param sigma   distance d'équilibre du potentiel LJ (longueur)
      * @param rcut    rayon de coupure des interactions LJ
+     * @param G       constante du champ gravitationnel uniforme (négatif = vers le bas)
      * @param useGrav active la gravitation newtonienne entre particules
      * @param useLJ   active le potentiel de Lennard-Jones
+     * @param usePotG active le champ gravitationnel uniforme (F = m*G selon y)
      */
     explicit Univers(int dim, std::array<double, 3> L,
                      double epsilon, double sigma, double rcut,
-                     bool useGrav, bool useLJ);
+                     double G = 0.0, bool useGrav = false,
+                     bool useLJ = false, bool usePotG = false);
 
     /// @}
 
@@ -190,17 +205,23 @@ public:
      * Les conditions aux limites sont appliquées après la mise à jour des positions.
      * La grille de cellules est reconstruite après chaque mise à jour des positions.
      *
-     * @param t_start   temps initial de la simulation
-     * @param t_end     temps final de la simulation
-     * @param dt        pas de temps
-     * @param afficher  si true, écrit une ligne CSV sur stdout à chaque pas
-     * @param vtkFreq   fréquence de sauvegarde VTK en nombre de pas (0 = désactivé)
-     * @param vtkPrefix préfixe des fichiers VTK générés (ex. "output" → output_000001.vtu)
+     * @param t_start      temps initial de la simulation
+     * @param t_end        temps final de la simulation
+     * @param dt           pas de temps
+     * @param afficher     si true, écrit une ligne CSV sur stdout à chaque pas
+     * @param vtkFreq      fréquence de sauvegarde VTK en nombre de pas (0 = désactivé)
+     * @param vtkPrefix    préfixe des fichiers VTK générés (ex. "output" → output_000001.vtu)
+     * @param targetEcin   énergie cinétique cible pour le thermostat (0 = désactivé)
+     * @param ecFreq       fréquence de rescaling de l'énergie cinétique (en pas)
+     * @param showProgress affiche une barre de progression sur stderr
      */
     void StromerVerlet(double t_start, double t_end, double dt,
                        bool afficher = true,
                        int vtkFreq = 0,
-                       const std::string& vtkPrefix = "output");
+                       const std::string& vtkPrefix = "output",
+                       double targetEcin = 0.0,
+                       int ecFreq = 1000,
+                       bool showProgress = false);
 
     /**
      * @brief Sauvegarde l'état courant des particules dans un fichier VTK XML

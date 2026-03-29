@@ -11,7 +11,7 @@ int main() {
     const double sigma   = 1.0;
     const double rcut    = 2.5 * sigma;
 
-    Univers u(2, {10.0, 10.0, 0.0}, epsilon, sigma, rcut, false, true);
+    Univers u(2, {10.0, 10.0, 0.0}, epsilon, sigma, rcut, 0.0, false, true);
 
     u.addParticule(Particule(
         Vecteur<3>{3.0,             5.0, 0.0},

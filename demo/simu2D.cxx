@@ -20,7 +20,7 @@ int main() {
     const double gap = 3.0 * rcut;
     const double Ly  = (ny_rect - 1)*d + (ny_carr - 1)*d + gap + 4.0*rcut;
 
-    Univers u(2, {Lx, Ly, 0.0}, epsilon, sigma, rcut, false, true);
+    Univers u(2, {Lx, Ly, 0.0}, epsilon, sigma, rcut, 0.0, false, true);
 
     long id = 0;
 

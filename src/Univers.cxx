@@ -5,17 +5,20 @@
 #include <sstream>
 #include <utility>
 #include <map>
+#include <cmath>
 
 Univers::Univers(int dim, std::array<double, 3> L, double epsilon,
-                 double sigma, double rcut, bool useGrav, bool useLJ)
+                 double sigma, double rcut,
+                 double G, bool useGrav, bool useLJ, bool usePotG)
     : dim(dim), L(L), epsilon(epsilon),
-      sigma(sigma), rcut(rcut), useGrav(useGrav), useLF(useLJ),
+      sigma(sigma), rcut(rcut), G(G),
+      useGrav(useGrav), useLF(useLJ), usePotG(usePotG),
       condLimites{ConditionLimite::LIBRE, ConditionLimite::LIBRE,
                   ConditionLimite::LIBRE, ConditionLimite::LIBRE,
                   ConditionLimite::LIBRE, ConditionLimite::LIBRE}
 {
     for(int d = 0; d < 3; ++d) {
-        nc[d] = (d < dim) ? std::max(1, (int)(L[d] / rcut)) : 1; // gère toutes les dimensions possibles
+        nc[d] = (d < dim) ? std::max(1, (int)(L[d] / rcut)) : 1;
     }
     int total = nc[0] * nc[1] * nc[2];
     cellules.reserve(total);
@@ -96,7 +99,7 @@ std::vector<int> Univers::voisinesIdx(int idx) const {
     int ix =  idx % nc[0];
 
     std::vector<int> result;
-    result.reserve(27); // maximum possible de voisines
+    result.reserve(27);
 
     for (int dz = -1; dz <= 1; ++dz) {
         int jz = iz + dz; if (jz < 0 || jz >= nc[2]) continue;
@@ -124,14 +127,16 @@ Vecteur<3> Univers::forceLJ(size_t i, size_t j) const {
     Vecteur<3> rij = particules[j].getPosition() - particules[i].getPosition();
     double d = rij.norm();
     if (d == 0.0) return Vecteur<3>{};
-    return 24 * epsilon * 1 / (d * d) * std::pow(sigma / d, 6) * (1 - 2 * std::pow(sigma / d, 6)) * rij;
+    return 24.0 * epsilon / (d * d) * std::pow(sigma / d, 6) * (1.0 - 2.0 * std::pow(sigma / d, 6)) * rij;
+}
 
+Vecteur<3> Univers::potGrav(int i) const {
+    double mi = particules[i].getMasse();
+    return Vecteur<3>{0.0, mi * G, 0.0};
 }
 
 void Univers::calcForcesParoi(std::vector<Vecteur<3>>& F) const {
-    // r_cut du potentiel de paroi : point d'équilibre du LJ 1D (force nulle)
-    // F = 0 quand 2r = 2^{1/6}·σ  ⟹  r_eq = 2^{1/6}·σ / 2
-    // La coupure est fixée à r_cut = 2^{1/6}·σ (englobe la zone répulsive + le puits)
+    // r_cut du potentiel de paroi : 2^{1/6}·σ (englobe la zone répulsive + le puits)
     const double rcut_wall = std::pow(2.0, 1.0 / 6.0) * sigma;
     int n = (int)particules.size();
 
@@ -164,7 +169,7 @@ void Univers::calcForces(std::vector<Vecteur<3>>& F) const {
     int n = (int)particules.size();
     for (int i = 0; i < n; ++i) F[i] = Vecteur<3>{};
 
-    // Newton
+    // Gravitation newtonienne entre particules (O(N²))
     if (useGrav) {
         for (int i = 0; i < n; ++i) {
             for (int j = i + 1; j < n; ++j) {
@@ -175,15 +180,15 @@ void Univers::calcForces(std::vector<Vecteur<3>>& F) const {
         }
     }
 
-    // Lennard Jones
+    // Lennard-Jones via linked-cell list
     if (useLF) {
         for (int i = 0; i < n; ++i) {
             int cellIdx = celluleIdx(particules[i].getPosition());
-            std::vector<int> voisines = voisinesIdx(cellIdx);
-            for  (auto&c: voisines) {
-                if (distance(particules[i].getPosition(), cellules[c].getCentre()) < rcut) {
-                    for (int j : cellules[c].getIndices()) {
-                        if (j <= i) continue;  // Newton : chaque paire (i,j) une seule fois
+            for (int c : voisinesIdx(cellIdx)) {
+                for (int j : cellules[c].getIndices()) {
+                    if (j <= i) continue;  // Newton : chaque paire une seule fois
+                    double d = distance(particules[i].getPosition(), particules[j].getPosition());
+                    if (d < rcut) {
                         Vecteur<3> Fij = forceLJ(i, j);
                         F[i] += Fij;
                         F[j] -= Fij;
@@ -191,6 +196,12 @@ void Univers::calcForces(std::vector<Vecteur<3>>& F) const {
                 }
             }
         }
+    }
+
+    // Champ gravitationnel uniforme
+    if (usePotG) {
+        for (int i = 0; i < n; ++i)
+            F[i] += potGrav(i);
     }
 
     // Forces de paroi LJ (REFLEXION_LJ)
@@ -234,13 +245,17 @@ void Univers::sauvegarderVTK(const std::string& filename) const {
 }
 
 void Univers::StromerVerlet(double t_start, double t_end, double dt,
-                             bool afficher, int vtkFreq, const std::string& vtkPrefix) {
+                             bool afficher, int vtkFreq, const std::string& vtkPrefix,
+                             double targetEcin, int ecFreq, bool showProgress) {
     int n = (int)particules.size();
     std::vector<Vecteur<3>> F(n), F_old(n);
 
+    const int totalSteps   = (int)std::round((t_end - t_start) / dt);
+    const int progressFreq = std::max(1, totalSteps / 200);
+
     calcForces(F);
 
-    // En-tête CSV : noms des particules
+    // En-tête CSV
     if (afficher) {
         std::cout << "t";
         for (const auto& p : particules) {
@@ -275,7 +290,6 @@ void Univers::StromerVerlet(double t_start, double t_end, double dt,
                 if (!appliquerConditionParticule(i))
                     toRemove.push_back(i);
             }
-            // Suppression des particules absorbées (du plus grand indice au plus petit)
             for (int k = (int)toRemove.size() - 1; k >= 0; --k) {
                 int idx = toRemove[k];
                 particules.erase(particules.begin() + idx);
@@ -300,6 +314,18 @@ void Univers::StromerVerlet(double t_start, double t_end, double dt,
             particules[i].setVitesse(newVit);
         }
 
+        // Rescaling d'énergie cinétique (thermostat simple)
+        if (targetEcin > 0.0 && step % ecFreq == 0) {
+            double Ec = 0.0;
+            for (int i = 0; i < n; ++i)
+                Ec += 0.5 * particules[i].getMasse() * particules[i].getVitesse().norm2();
+            if (Ec > 0.0) {
+                double beta = std::sqrt(targetEcin / Ec);
+                for (int i = 0; i < n; ++i)
+                    particules[i].setVitesse(beta * particules[i].getVitesse());
+            }
+        }
+
         ++step;
 
         if (vtkFreq > 0 && step % vtkFreq == 0) {
@@ -308,7 +334,18 @@ void Univers::StromerVerlet(double t_start, double t_end, double dt,
             sauvegarderVTK(oss.str());
         }
 
-        // Affichage CSV : une ligne par pas de temps
+        // Barre de progression (stderr)
+        if (showProgress && step % progressFreq == 0) {
+            constexpr int W = 40;
+            double pct = (totalSteps > 0) ? (double)step / totalSteps : 1.0;
+            int filled = (int)(pct * W);
+            std::cerr << "\r[";
+            for (int k = 0; k < W; ++k) std::cerr << (k < filled ? '#' : ' ');
+            std::cerr << "] " << (int)(pct * 100) << "% t=" << (t + dt) << "/" << t_end;
+            std::cerr.flush();
+        }
+
+        // Affichage CSV
         if (afficher) {
             std::cout << (t + dt);
             for (const auto& p : particules) {
@@ -319,9 +356,10 @@ void Univers::StromerVerlet(double t_start, double t_end, double dt,
             std::cout << "\n";
         }
     }
+
+    if (showProgress) std::cerr << "\n";
 }
 
-// Affiche les positions courantes (snapshot), respecte dim
 std::ostream& operator<<(std::ostream& os, const Univers& u) {
     for (const auto& p : u.particules) {
         os << p.getCategorie();
